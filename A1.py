@@ -1,26 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as pl
 
-tmax=1.
-xmax=1.
-N=100
-dt=tmax/N
-dx=xmax/N
-X=np.array([1])
-Q=np.zeros((N,N))
-W=np.array([0])
+tmax=0.1
+xmax=10.
+Nt=10000
+Nx=100
+dt=tmax/Nt
+dx=xmax/Nx
 
-t=np.arange(N+1)*dt
+Q=np.zeros((Nt,Nx))
+Q2=np.zeros((Nt,Nx))
 
-def step(W,Q,dx,nt,N):
-    dw=np.sqrt(dt)*np.random.randn()
+def step(W,Q,dx,dt,nt,N):
+
     for i in range(1,N-1):
-
-        Q[nt][i]=Q[nt][i-1]+(Q[nt-1][i+1]-2*Q[nt-1][i]+2*Q[nt-1][i-1])/dx**2 *dt - Q[nt-1][i]*dt + W[i]*dw
-        print "QQQQ"
-        print (Q[nt-1][i+1]-2*Q[nt-1][i]+2*Q[nt-1][i-1])/dx**2 *dt
-        print Q[nt-1][i]*dt
-        print W[i]*dw
+        dw=np.sqrt(dt)*np.random.randn()
+        Q[nt][i]=Q[nt-1][i]+(Q[nt-1][i+1]-2*Q[nt-1][i]+2*Q[nt-1][i-1])/dx**2 *dt - Q[nt-1][i]*dt + W[i]*dw
     return Q
 	
 def braun(N,dx):
@@ -30,11 +25,12 @@ def braun(N,dx):
         W=np.append(W,W[-1]+dw)
     return W
 
-W=braun(N,dx)
-for i in range(N-1):
-    W=braun(N,dx)
-    Q=step(W,Q,dx,i+1,N)
+for i in range(Nt-1):
+    W=braun(Nx,dx)
+    Q=step(W,Q,dx,dt,i+1,Nx)
 
-pl.plot(Q[100-2])
+
+
+pl.plot(Q[-1])
 
 pl.show()
