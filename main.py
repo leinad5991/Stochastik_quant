@@ -1,34 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as pl
 
-tmax=0.1
-xmax=10.
-Nt=1000
-Nx=400
-dt=tmax/Nt
-dx=xmax/Nx
+dt=0.0001
+dx=0.1
+Nt=100000
+Nx=100
+tmax = dt*Nt
+xmax = dx*Nx
 
 Q=np.zeros((Nt,Nx))
-Q2=np.zeros((Nt,Nx))
 
-def step(W,Q,dx,dt,nt,N):
+def step(Q,dx,dt,nt,N):
 
     for i in range(1,N-1):
-        dw=np.sqrt(dt)*np.random.randn()
-        Q[nt][i]=Q[nt-1][i]+(Q[nt-1][i+1]-2*Q[nt-1][i]+Q[nt-1][i-1])/dx**2 *dt + Q[nt-1][i]*dt + W[i]*dw
+        dw=np.sqrt(2*dt/dx)*np.random.randn()
+        Q[nt][i]=Q[nt-1][i]+ (Q[nt-1][i+1]-2*Q[nt-1][i]+Q[nt-1][i-1])/dx**2 * dt - Q[nt-1][i]*dt + dw
     return Q
-	
-def braun(N,dx):
-    W=np.array([0])
-    for i in range(N):
-        dw=np.sqrt(dx)*np.random.randn()
-        W=np.append(W,W[-1]+dw)
-    return W
 
+def Energy(q,dx,xmax):
+    v=(q[0:-2]-q[1:-1])/dx
+    E=1/2*v**2+1./2.*q[1:-1]**2
+    return sum(E)/xmax
 
-for i in range(Nt-1):
-    W=braun(Nx,dx)
-    Q=step(W,Q,dx,dt,i+1,Nx)
-pl.plot(Q[-1])
+E=0
+for i in range(1,Nt):
+    Q=step(Q,dx,dt,i,Nx)
+    E=E+Energy(Q[i],dx,xmax)
 
+print E/Nt
+pl.plot(sum(Q)/Nt)
 pl.show()
