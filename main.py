@@ -9,8 +9,11 @@ Nx=100
 tmax = dt*Nt
 #xmax = 8*np.pi
 
-dx=1
-xmax=dx*Nx
+
+xmax=1*Nx
+
+xaxes=xaxes=np.arange(0,xmax,1)
+dx=np.zeros(Nx)+1.
 
 w=1
 m=1.
@@ -18,25 +21,15 @@ k=w**2*m
 
 
 
+
 def step(Q,Qh,dx,dt,N,h):
-    Qn=np.zeros(N)
-    Qhn=np.zeros(N)
-    #Periodische Randbedingung
-    dw=np.sqrt(2*dt/dx)*np.random.randn()
-    Qn[0]=Q[0]+ m*(Q[1]-2*Q[0]+Q[-1])/dx**2 * dt -V(Q[0])*dt + dw
-    Qhn[0]=Qh[0]+ m*(Qh[1]-2*Qh[0]+Qh[-1])/dx**2 * dt -V(Qh[0])*dt + dw + h*dt
 
+    dw=np.sqrt(2*dt/dx)*np.random.randn(N)
 
-    dw=np.sqrt(2*dt/dx)*np.random.randn()
-    Qn[-1]=Q[-1]+ m*(Q[0]-2*Q[-1]+Q[-2])/dx**2 * dt - V(Q[-1])*dt + dw
-    Qhn[-1]=Qh[-1]+ m*(Qh[0]-2*Qh[-1]+Qh[-2])/dx**2 * dt - V(Qh[-1])*dt + dw
+    Qn=Q+ m*(np.roll(Q,1)-2*Q+np.roll(Q,-1))/dx**2 * dt -V(Q)*dt + dw
+    Qhn=Qh+ m*(np.roll(Qh,1)-2*Qh + np.roll(Qh,-1))/dx**2 * dt -V(Qh)*dt + dw
 
-    for i in range(1,N-1):
-        dw=np.sqrt(2*dt/dx)*np.random.randn()
-        mhm=0
-        if i==N/2:mhm=h*dt
-        Qn[i]=Q[i]+ m*(Q[i+1]-2*Q[i]+Q[i-1])/dx**2 * dt - V(Q[i])*dt + dw
-        Qhn[i]=Qh[i]+ m*(Qh[i+1]-2*Qh[i]+Qh[i-1])/dx**2 * dt - V(Qh[i])*dt + dw
+    Qhn[0]=Qhn[0]+ h*dt
 
     return (Qn,Qhn)
 
@@ -66,21 +59,15 @@ def histogram(Q):
     hist, density_axes = np.histogram(Q, bins=Nx , range=(-10,10),density=True)
     return hist
 
-def Energy(q,dx,xmax):
-    v=(q[0:-2]-q[1:-1])/dx
-    E=1/2*m*v**2+1./2.*k*q[1:-1]**2
-    return sum(E)/xmax
-
 def Propagator(Q,Nx):
     P=np.zeros(Nx)
     for i in range(Nx):
             P[i]=Q[i]*Q[0]
     return P
 def steigung(x,dx):
+    return (-x+np.roll(x,-1))/dx
 
-    return (x[1:]-x[:-1])/dx
-
-def Energy2(q):
+def Energy(q):
     global density_axes
     min1=density_axes[0]
     max1=density_axes[-1]
@@ -103,10 +90,8 @@ Qhs=Qs
 P=0
 P0=0
 
-xaxes=np.arange(0,xmax,dx)
-
-V=Vdopp
-pot=potdopp
+V=Vcosh
+pot=potcosh
 
 
 h=0.01
@@ -125,15 +110,17 @@ def multistep(n):
         Qs=Qs+Q
         Qhs=Qhs+Qh
     P=P+P0
+
 def animate(i):
     global Q,Qh,P,P0,Qs,Qhs,xaxes,density_axes,h,P0,vplot
     mn=1000
     multistep(mn)
 
-    line.set_data(density_axes[1:],P0/mn)
-    print (Energy2(P/i/mn) ,steigung(np.log(  (Qhs-Qs)/i/mn/h ),dx)[-1])
-    vplot.set_data(density_axes[1:],P0/mn)
-    #line.set_data(xaxes[1:],steigung(np.log((Qhs-Qs)/i/mn/h),dx))
+    #line.set_data(density_axes[1:],P0/mn)
+    st=steigung(np.log(  (Qhs-Qs)/i/mn/h ),dx)
+    print (Energy(P/i/mn) ,sum(st[-10:])/10)
+
+    line.set_data(xaxes,st)
     return line,
 
 def init():
@@ -141,12 +128,12 @@ def init():
     return line,
 
 fig = pl.figure()
-ax = pl.axes(xlim=(-10, 10), ylim=(0, 0.6))
+ax = pl.axes(xlim=(0, xaxes[-1]), ylim=(0, 0.6))
 line, = pl.plot([], [])
 
 histogram(Q)
 pl.plot(density_axes[1:],pot(density_axes[1:])/8.)
-vplot,=pl.plot([],[])
+
 
 anima = anim.FuncAnimation(fig, animate, init_func=init, blit=True)
 pl.show()
