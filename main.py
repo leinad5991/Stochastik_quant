@@ -5,7 +5,7 @@ import matplotlib.animation as anim
 dt=0.1
 
 
-Nx=10
+Nx=1000
 dx1=1.
 xmax=Nx*dx1
 
@@ -96,8 +96,8 @@ PP=np.zeros(Nx-1)
 P=0
 P0=0
 
-V=Vcosh
-pot=potcosh
+V=Vdopp
+pot=potdopp
 
 
 h=0.0000000001
@@ -109,10 +109,9 @@ def multistep(n):
     global Q,Qh,P,Qs,Qhs,P0,dt
     P0=0
     Qfiktiv=np.zeros(n)
-    print Qfiktiv
     for i in range(n):
         (Q,Qh)=step(Q,Qh,dx,dt,Nx,h)
-        Qfiktiv[i]=sum((Qhs-Qs)/h/i)*dx1
+        #Qfiktiv[i]=sum((Qhs-Qs)/h/i)*dx1
 
         #P0=P0+histogram(Q)
 
@@ -123,6 +122,33 @@ def multistep(n):
     pl.plot(np.log(Qfiktiv))
     print steigung(np.log(Qfiktiv),dt)
     pl.show()
+
+def Energy_gap(n):
+    global dt
+    Q=np.zeros(Nx)
+    Qh=Q
+    Qs=np.zeros(Nx)
+    Qhs=Qs
+    for i in range(1000):
+        (Q,Qh)=step(Q,Qh,dx,dt,Nx,h)
+
+    for i in range(n):
+        (Q,Qh)=step(Q,Qh,dx,dt,Nx,h)
+
+        Qs=Qs+Q
+        Qhs=Qhs+Qh
+
+    nn=int(Nx/6)
+    nn=1
+    return steigung(np.log(  (Qhs-Qs)/n/h   ),dx)[-1]
+
+def EnergyGapM(n):
+    s=0
+    for i in range(1,n):
+        s=s+Energy_gap(60000)
+        print s/i
+
+    return s/n
 
 def extract(Q):
     global PP,xaxes
@@ -157,7 +183,7 @@ line, = pl.plot([], [])
 histogram(Q)
 
 
-multistep(6000)
+print EnergyGapM(500)
 #pl.plot(density_axes[1:],pot(density_axes[1:])/20.)
 
 
